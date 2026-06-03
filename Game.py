@@ -280,9 +280,15 @@ class Spider(Enemy):
     def __init__(self, path):
         super().__init__(health = 10, cooldown=0.4*FPS, damage=3, path=path)
 
+    def draw(self):
+        pyxel.blt(self.x,self.y,0,0,0,16,16,colkey=11)
+
 class Soldier(Enemy):
     def __init__(self, path):
         super().__init__(health = 10, cooldown=0.5*FPS, damage=5, path=path)
+        
+    def draw(self):
+        pyxel.blt(self.x,self.y,0,0,32,16,16,colkey=11)
 
 class General(Enemy):
     def __init__(self, path):
@@ -291,14 +297,23 @@ class General(Enemy):
     def onDeath(self):
         for i in range(3):
             self.spawned.append(Soldier())
+        
+    def draw(self):
+        pyxel.blt(self.x,self.y,0,0,16,16,16,colkey=11)
 
 class Dino(Enemy):
     def __init__(self, path):
         super().__init__(health = 50, cooldown=2*FPS, damage=40, path=path)
+        
+    def draw(self):
+        pyxel.blt(self.x,self.y,0,0,48,16,16,colkey=11)
 
 class Car(Enemy):
     def __init__(self, path):
         super().__init__(health=5, cooldown=0.2*FPS, damage=10, path=path)
+        
+    def draw(self):
+        pyxel.blt(self.x,self.y,0,0,64,16,16,colkey=11)
 
 
 class Button:
