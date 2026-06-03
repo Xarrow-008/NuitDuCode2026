@@ -3,6 +3,8 @@ import pyxel
 CAM_W = 400
 CAM_H = 300
 
+TILE_SIZE = 16
+
 
 class App:
     def __init__(self):
@@ -97,12 +99,29 @@ class InGame:
         pass
 
 class World:
-    def __init__(self):
-        pass
-    def update(self):
-        pass
+    def __init__(self, startPoint, endPoint, path):
+        self.length = 12
+        self.height = 12
+
+        self.map = []
+        for i in range(self.length):
+            tab = []
+            for j in range(self.height):
+                tab.append(0)
+            self.map.append(tab)
+
+        self.map[startPoint[1]][startPoint[0]] = 3 #Puts start point
+        self.map[endPoint[1]][endPoint[0]] = 4 #Puts end point
+
+        for coord in path :
+            self.map[coord[1]][coord[0]] = 1
+
+
     def draw(self):
-        pass
+        for Y in range(len(self.map)):
+            for X in range(len(self.map[Y])):
+                pyxel.rect(X*TILE_SIZE, Y*TILE_SIZE, TILE_SIZE, TILE_SIZE, col=self.map[Y][X])
+
 
 class Player:
     def __init__(self):
