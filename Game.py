@@ -547,6 +547,20 @@ class MouseTrap:
     def draw(self):
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
         pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+
+        
+    def rotate(self):
+        if self.orient == [-1,0]:
+            self.orient = [0,1]
+            
+        elif self.orient == [0,1]:
+            self.orient = [1,0]
+
+        elif self.orient == [1,0]:
+            self.orient = [0,-1]
+
+        elif self.orient == [0,-1]:
+            self.orient = [-1,0]
     
 class GumBall:
     def __init__(self,x,y):
@@ -574,6 +588,21 @@ class GumBall:
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
         pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
 
+
+    def rotate(self):
+        if self.orient == [-1,0]:
+            self.orient = [0,1]
+            
+        elif self.orient == [0,1]:
+            self.orient = [1,0]
+
+        elif self.orient == [1,0]:
+            self.orient = [0,-1]
+
+        elif self.orient == [0,-1]:
+            self.orient = [-1,0]
+
+
 class Poison:
     def __init__(self,x,y):
         self.x = x
@@ -598,7 +627,10 @@ class Poison:
 
     def draw(self):
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
-        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)    def rotate(self):
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+       
+
+    def rotate(self):
         if self.orient == [-1,0]:
             self.orient = [0,1]
             
