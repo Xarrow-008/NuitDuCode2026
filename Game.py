@@ -99,16 +99,24 @@ class InGame:
         self.enemies = []
         self.enemies.append(Enemy(10,0.5*FPS,10,self.world.path))
 
+        self.towers = []
+
 
         self.lives = 50
 
 
     def update(self):
         self.world.update()
-        for enemy in self.enemies:
-            #enemy.update()
 
-            if self.world.map[enemy.coord[1]][enemy.coord[0]].state.name == 'end':
+        self.enemiesUpdate()
+
+        self.towersUpdate()
+
+    def enemiesUpdate(self):
+        for enemy in self.enemies:
+            enemy.update()
+
+            if self.world.map[enemy.coord[1]][enemy.coord[0]].state.place == 'end':
                 self.lives -= enemy.damage
                 self.enemies.remove(enemy)
 
@@ -119,6 +127,13 @@ class InGame:
 
         for enemy in self.enemies:
             enemy.draw()
+
+    def createTower(self,X,Y):
+        pass
+
+    def towersUpdate(self):
+        pass
+
 
 
 class World:
@@ -156,15 +171,6 @@ class World:
                     case.state = TowerCase(case.x,case.y)
 
 
-
-class Player:
-    def __init__(self):
-        pass
-    def update(self):
-        pass
-    def draw(self):
-        pass
-
     
 class Enemy:
     def __init__(self, health, cooldown, damage, path):
@@ -175,44 +181,21 @@ class Enemy:
         self.width = 8
         self.height = 8
         
-        self.coord = [0,0]
-        self.movingCoord = [0,0]
+        self.indice = 0
+        self.path = path
+        self.coord = path[0]
+        self.movingCoord = [path[0][0],path[0][1]]
         self.travelled = [(self.coord[0], self.coord[1])]
 
     def update(self):
         if onTick(self.cooldown):
-            self.movingCoord = self.coord.copy()
-            hasMoved = False
-
-            if self.canTravel(self.coord[0]-1, self.coord[1]) and not hasMoved:
-                hasMoved = True
-                self.travelled.append((self.coord[0]-1, self.coord[1]))
-                self.coord = [self.coord[0]-1, self.coord[1]]
-                
-
-            if self.canTravel(self.coord[0]+1, self.coord[1]) and not hasMoved:
-                hasMoved = True
-                self.travelled.append((self.coord[0]+1, self.coord[1]))
-                self.coord = [self.coord[0]+1, self.coord[1]]
-
-            if self.canTravel(self.coord[0], self.coord[1]-1) and not hasMoved:
-                hasMoved = True
-                self.travelled.append((self.coord[0], self.coord[1]-1))
-                self.coord = [self.coord[0], self.coord[1]-1]
-
-            if self.canTravel(self.coord[0], self.coord[1]+1) and not hasMoved:
-                hasMoved = True
-                self.travelled.append((self.coord[0], self.coord[1]+1))
-                self.coord = [self.coord[0], self.coord[1]+1]
+            self.movingCoord = [self.coord[0], self.coord[1]]
+            self.indice += 1
+            self.coord = self.path[self.indice]
 
         else:
             self.movingCoord[0] += pyxel.sgn(self.coord[0]-self.movingCoord[0])*1/self.cooldown
             self.movingCoord[1] += pyxel.sgn(self.coord[1]-self.movingCoord[1])*1/self.cooldown
-            
-            
-
-    def canTravel(self,X,Y):
-        return map[Y][X] in [1,3,4] and (X,Y) not in self.travelled
 
     def draw(self):
         pyxel.rect(5*TILE_SIZE+self.movingCoord[0]*TILE_SIZE+4, self.movingCoord[1]*TILE_SIZE+4, self.width, self.height, col=7)
@@ -307,18 +290,15 @@ class TowerCase:
     def draw(self):
         pyxel.rect(self.x,self.y,self.w,self.h,2)
 
+class SlingShot:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+
+    def update(self):
+        pass
 
 
-
-
-    
-
-
-
-
-
-class MouseTrap:
-    pass
 
 
 
