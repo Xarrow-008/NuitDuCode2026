@@ -1,11 +1,11 @@
 import pyxel
 
-CAM_W = 400
-CAM_H = 300
+CAM_W = 608
+CAM_H = 352
 
-TILE_SIZE = 16
+TILE_SIZE = 32
 
-MARGIN = 5*TILE_SIZE
+MARGIN = 4*TILE_SIZE
 
 FPS = 60
 
@@ -162,7 +162,7 @@ class InGame:
         self.world.draw()
 
         pyxel.text(1, 1, f"Vies restantes : {self.lives}", 8)
-        pyxel.text(21*TILE_SIZE,1, f"Argent : {self.money}", 9)
+        pyxel.text(CAM_W-3*TILE_SIZE,1, f"Argent : {self.money}", 9)
 
         for enemy in self.enemies:
             enemy.draw()
@@ -193,8 +193,8 @@ class InGame:
 
 class World:
     def __init__(self, path):
-        self.width = 15
-        self.height = 19
+        self.width = 11
+        self.height = 11
 
         self.map = [[Case(x,y) for x in range(self.width)] for y in range(self.height)]
 
@@ -212,7 +212,7 @@ class World:
 
     def draw(self):
         pyxel.rect(0,0, MARGIN, CAM_H, col=7)
-        pyxel.rect(CAM_W-MARGIN,0, 5*TILE_SIZE, CAM_H, col=7)
+        pyxel.rect(CAM_W-MARGIN,0, MARGIN, CAM_H, col=7)
 
         for line in self.map:
             for case in line:
@@ -240,8 +240,8 @@ class Enemy:
         self.indice = 0
         self.path = path
 
-        self.x = 5*TILE_SIZE+path[0][0]*TILE_SIZE+self.width/2
-        self.y = path[0][1]*TILE_SIZE+self.height/2
+        self.x = MARGIN+path[0][0]*TILE_SIZE
+        self.y = path[0][1]*TILE_SIZE
 
         self.location = path[0]
         self.objective = path[1]
@@ -252,8 +252,8 @@ class Enemy:
         if onTick(self.cooldown):
             self.indice += 1
 
-            self.x = 5*TILE_SIZE+self.path[self.indice][0]*TILE_SIZE+self.width/2
-            self.y = self.path[self.indice][1]*TILE_SIZE+self.height/2
+            self.x = MARGIN+self.path[self.indice][0]*TILE_SIZE
+            self.y = self.path[self.indice][1]*TILE_SIZE
 
             self.location = self.path[self.indice]
             if self.indice < len(self.path)-1:
@@ -281,7 +281,7 @@ class Spider(Enemy):
         super().__init__(health = 10, cooldown=0.4*FPS, damage=3, path=path)
 
     def draw(self):
-        pyxel.blt(self.x,self.y,0,0,0,16,16,colkey=11)
+        pyxel.blt(self.x,self.y,0,0,0,32,32,colkey=11)
 
 class Soldier(Enemy):
     def __init__(self, path):
@@ -299,7 +299,7 @@ class General(Enemy):
             self.spawned.append(Soldier())
         
     def draw(self):
-        pyxel.blt(self.x,self.y,0,0,16,16,16,colkey=11)
+        pyxel.blt(self.x,self.y,0,0,32,32,32,colkey=11)
 
 class Dino(Enemy):
     def __init__(self, path):
@@ -452,7 +452,7 @@ class SlingShot:
             self.shoot()
 
     def shoot(self):
-        self.bullet = Bullet(self.x+self.w/2, self.y+self.h/2, self.orient, 5, 5*TILE_SIZE, 0, 2)
+        self.bullet = Bullet(self.x+self.w/2, self.y+self.h/2, self.orient, 5, MARGIN, 0, 2)
 
     def seeEnemy(self):
         return True
