@@ -97,7 +97,7 @@ class InGame:
         self.world = World([(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(4,1),(4,0)])
         
         self.enemies = []
-        self.enemies.append(Car(self.world.path))
+        self.enemies.append(General(self.world.path))
 
         self.towers = []
 
@@ -130,16 +130,33 @@ class InGame:
                 enemy.onDeath()
                 self.money += enemy.maxHealth
 
-            for enemy in enemy.spawned:
-                self.enemies.append(enemy)
+            for spawn in enemy.spawned:
+                self.enemies.append(spawn)
 
-            if self.world.map[enemy.coord[1]][enemy.coord[0]].state.place == 'end' and enemy.health > 0:
+            if self.world.map[enemy.location[1]][enemy.location[0]].state.place == 'end' and enemy.health > 0:
                 self.lives -= enemy.damage
                 self.enemies.remove(enemy)
 
     def bulletsUpdate(self):
         for bullet in self.bullets:
-            print(bullet)
+            bullet.update()
+
+            for enemy in self.enemies:
+                
+                print(enemy.x<=bullet.x-bullet.radius)
+
+                if collision(enemy.x, enemy.y, (enemy.width, enemy.height), bullet.x-bullet.radius, bullet.y-bullet.radius, (2*bullet.radius, 2*bullet.radius)) and bullet.range > 0:
+                    print("a")
+                    if bullet.pierce == 0:
+                        self.bullets.remove(bullet)
+                    else:
+                        bullet.pierce -= 1
+                    
+                    enemy.health -= bullet.damage
+            
+            if bullet.range <= 0:
+                self.bullets.remove(bullet)
+                    
 
     def draw(self):
         self.world.draw()
@@ -149,6 +166,9 @@ class InGame:
 
         for enemy in self.enemies:
             enemy.draw()
+
+        for bullet in self.bullets:
+            bullet.draw()
 
     def checkAddTowers(self):
         for line in self.world.map:
@@ -208,7 +228,10 @@ class Enemy:
     def __init__(self, health, cooldown, damage, path):
         self.maxHealth = health
         self.health = health
+
         self.cooldown = cooldown
+        self.speed = TILE_SIZE/self.cooldown
+
         self.damage = damage
 
         self.width = 8
@@ -216,25 +239,39 @@ class Enemy:
         
         self.indice = 0
         self.path = path
-        self.coord = path[0]
-        self.movingCoord = [path[0][0],path[0][1]]
-        self.travelled = [(self.coord[0], self.coord[1])]
+
+        self.x = 5*TILE_SIZE+path[0][0]*TILE_SIZE+self.width/2
+        self.y = path[0][1]*TILE_SIZE+self.height/2
+
+        self.location = path[0]
+        self.objective = path[1]
 
         self.spawned = []
 
     def update(self):
         if onTick(self.cooldown):
-            self.movingCoord = [self.coord[0], self.coord[1]]
             self.indice += 1
-            self.coord = self.path[self.indice]
 
-        else:
-            self.movingCoord[0] += pyxel.sgn(self.coord[0]-self.movingCoord[0])*1/self.cooldown
-            self.movingCoord[1] += pyxel.sgn(self.coord[1]-self.movingCoord[1])*1/self.cooldown
+            self.x = 5*TILE_SIZE+self.path[self.indice][0]*TILE_SIZE+self.width/2
+            self.y = self.path[self.indice][1]*TILE_SIZE+self.height/2
+
+            self.location = self.path[self.indice]
+            if self.indice < len(self.path)-1:
+                self.objective = self.path[self.indice+1]    
+            
+        if self.objective[0] < self.location[0]:
+            self.x -= self.speed
+        if self.objective[0] > self.location[0]:
+            self.x += self.speed
+        if self.objective[1] < self.location[1]:
+            self.y -= self.speed
+        if self.objective[1] > self.location[1]:
+            self.y += self.speed
+
 
 
     def draw(self):
-        pyxel.rect(5*TILE_SIZE+self.movingCoord[0]*TILE_SIZE+4, self.movingCoord[1]*TILE_SIZE+4, self.width, self.height, col=7)
+        pyxel.rect(self.x, self.y, self.width, self.height, col=7)
 
     def onDeath(self):
         pass
@@ -356,8 +393,32 @@ class TowerCase:
     def initType(self,type): #list al the types
         if type == 'SlingShot':
             self.weapon = SlingShot(self.x,self.y)
+        elif type == "MouseTrap":
+            self.weapon = MouseTrap(self.x,self.y)
         else:
             self.weapon = SlingShot(self.x,self.y)
+
+
+
+class Bullet:
+    def __init__(self, x, y, vector, damage, range, pierce, radius):
+        self.x = x
+        self.y = y
+        self.vector = vector
+
+        self.radius = radius
+
+        self.damage = damage
+        self.range = range
+        self.pierce = pierce
+
+    def update(self):
+        self.x += self.vector[0]
+        self.y += self.vector[1]
+        self.range -= (self.vector[0]**2+self.vector[1]**2)**0.5
+
+    def draw(self):
+        pyxel.circ(self.x, self.y, self.radius, 7)
 
 
 class SlingShot:
@@ -372,11 +433,11 @@ class SlingShot:
         self.bullet = None
 
     def update(self):
-        if self.seeEnemy() and onTick(60):
+        if self.seeEnemy() and onTick(1*FPS):
             self.shoot()
 
     def shoot(self):
-        self.bullet = [self.x+self.orient[0]*TILE_SIZE, self.y + self.orient[1]*TILE_SIZE]
+        self.bullet = Bullet(self.x+self.w/2, self.y+self.h/2, self.orient, 5, 5*TILE_SIZE, 0, 2)
 
     def seeEnemy(self):
         return True
@@ -386,9 +447,36 @@ class SlingShot:
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
         pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
 
+class MouseTrap:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+
+        self.orient = [-1,0]
+
+        self.bullet = None
+
+    def update(self):
+        if self.seeEnemy() and onTick(1.25*FPS):
+            self.shoot()
+
+    def shoot(self):
+        self.bullet = Bullet(self.x+self.w/2, self.y+self.h/2, self.orient, 15, 1*TILE_SIZE, 3, 1)
+
+    def seeEnemy(self):
+        return True
 
 
+    def draw(self):
+        pyxel.rect(self.x,self.y,self.w,self.h,2) 
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+    
 
+
+def collision(x1,y1,s1,x2,y2,s2):
+    return (x1+s1[0]>=x2 and x2+s2[0]>=x1) and (y1+s1[1]>=y2 and y2+s2[1]>=y1)
 
 def pointInside(posX,posY,x,y,w,h):
     return (posX >= x and posX < x + w and
