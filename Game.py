@@ -548,7 +548,57 @@ class MouseTrap:
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
         pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
     
-    def rotate(self):
+class GumBall:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+
+        self.orient = [-1,0]
+
+        self.bullet = None
+
+    def update(self):
+        if self.seeEnemy() and onTick(2*FPS):
+            self.shoot()
+
+    def shoot(self):
+        self.bullet = Bullet(self.x+self.w/2, self.y+self.h/2, self.orient, 5, 1*TILE_SIZE, 0, 7)
+
+    def seeEnemy(self):
+        return True
+
+
+    def draw(self):
+        pyxel.rect(self.x,self.y,self.w,self.h,2) 
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+
+class Poison:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+
+        self.orient = [-1,0]
+
+        self.bullet = None
+
+    def update(self):
+        if self.seeEnemy() and onTick(2.25*FPS):
+            self.shoot()
+
+    def shoot(self):
+        self.bullet = Bullet(self.x+self.w/2, self.y+self.h/2, self.orient, 10, 1*TILE_SIZE, 3, 3)
+
+    def seeEnemy(self):
+        return True
+
+
+    def draw(self):
+        pyxel.rect(self.x,self.y,self.w,self.h,2) 
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)    def rotate(self):
         if self.orient == [-1,0]:
             self.orient = [0,1]
             
