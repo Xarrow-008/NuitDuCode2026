@@ -5,10 +5,13 @@ CAM_H = 300
 
 TILE_SIZE = 16
 
+MARGIN = 5*TILE_SIZE
+
+FPS = 60
 
 class App:
     def __init__(self):
-        pyxel.init(CAM_W,CAM_H)
+        pyxel.init(CAM_W,CAM_H,fps=FPS)
         pyxel.load('theme.pyxres')
 
         self.game = Game()
@@ -87,54 +90,70 @@ class Menu:
         if name == 'quit':
             pyxel.quit()
 
-
 class InGame:
     def __init__(self):
         self.switch = Switch()
 
-        self.world = World((0,0),(4,0),[(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(4,1)])
+        self.world = World([(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(4,1),(4,0)])
+        
+        self.enemies = []
+        self.enemies.append(Enemy(10,0.5*FPS,10,self.world.path))
+
+
+        self.lives = 50
 
 
     def update(self):
         self.world.update()
+        for enemy in self.enemies:
+            #enemy.update()
+
+            if self.world.map[enemy.coord[1]][enemy.coord[0]].state.name == 'end':
+                self.lives -= enemy.damage
+                self.enemies.remove(enemy)
+
     def draw(self):
         self.world.draw()
 
-map = []
+        pyxel.text(0, 1, f"Lives remaining : {self.lives}", 8)
+
+        for enemy in self.enemies:
+            enemy.draw()
+
 
 class World:
-    def __init__(self, startPoint, endPoint, path):
-        global map
-        self.length = 12
-        self.height = 12
+    def __init__(self, path):
+        self.width = 15
+        self.height = 19
 
-        for i in range(self.length):
-            tab = []
-            for j in range(self.height):
-                tab.append(0)
-            map.append(tab)
+        self.map = [[Case(x,y) for x in range(self.width)] for y in range(self.height)]
 
-        map[startPoint[1]][startPoint[0]] = 3 #Puts start point
-        map[endPoint[1]][endPoint[0]] = 4 #Puts end point
+        self.path = path
 
-        for coord in path :
-            map[coord[1]][coord[0]] = 1
+        for coord in path:
+            case = self.map[coord[1]][coord[0]]
+            case.state = PathCase(case.x,case.y)
+
+        self.map[path[0][1]][path[0][0]].state.place = 'start' #Puts start point
+        self.map[path[-1][1]][path[-1][0]].state.place = 'end' #Puts end point
+
+        
 
 
     def draw(self):
-        pyxel.rect(0,0, 5*TILE_SIZE, CAM_H, col=7)
-        pyxel.rect(CAM_W-5*TILE_SIZE,0, 5*TILE_SIZE, CAM_H, col=7)
+        pyxel.rect(0,0, MARGIN, CAM_H, col=7)
+        pyxel.rect(CAM_W-MARGIN,0, 5*TILE_SIZE, CAM_H, col=7)
 
-        for Y in range(len(map)):
-            for X in range(len(map[Y])):
-                pyxel.rect(X*TILE_SIZE+5*TILE_SIZE, Y*TILE_SIZE, TILE_SIZE, TILE_SIZE, col=map[Y][X])
+        for line in self.map:
+            for case in line:
+                case.draw()
+                
 
     def update(self):
-        global map
-        for Y in range(len(map)):
-            for X in range(len(map[Y])):
-                if map[Y][X]==0 and pyxel.btnp(pyxel.KEY_SPACE) and pointInside(pyxel.mouse_x, pyxel.mouse_y, 5*TILE_SIZE+X*TILE_SIZE, Y*TILE_SIZE, TILE_SIZE, TILE_SIZE):
-                    map[Y][X]=2
+        for line in self.map:
+            for case in line:
+                if case.state.name == 'empty' and pyxel.btnp(pyxel.KEY_SPACE) and pointInside(pyxel.mouse_x, pyxel.mouse_y, case.x, case.y, TILE_SIZE, TILE_SIZE):
+                    case.state = TowerCase(case.x,case.y)
 
 
 
@@ -145,15 +164,58 @@ class Player:
         pass
     def draw(self):
         pass
-    
 
+    
 class Enemy:
-    def __init__(self):
-        pass
+    def __init__(self, health, cooldown, damage, path):
+        self.health = health
+        self.cooldown = cooldown
+        self.damage = damage
+
+        self.width = 8
+        self.height = 8
+        
+        self.coord = [0,0]
+        self.movingCoord = [0,0]
+        self.travelled = [(self.coord[0], self.coord[1])]
+
     def update(self):
-        pass
+        if onTick(self.cooldown):
+            self.movingCoord = self.coord.copy()
+            hasMoved = False
+
+            if self.canTravel(self.coord[0]-1, self.coord[1]) and not hasMoved:
+                hasMoved = True
+                self.travelled.append((self.coord[0]-1, self.coord[1]))
+                self.coord = [self.coord[0]-1, self.coord[1]]
+                
+
+            if self.canTravel(self.coord[0]+1, self.coord[1]) and not hasMoved:
+                hasMoved = True
+                self.travelled.append((self.coord[0]+1, self.coord[1]))
+                self.coord = [self.coord[0]+1, self.coord[1]]
+
+            if self.canTravel(self.coord[0], self.coord[1]-1) and not hasMoved:
+                hasMoved = True
+                self.travelled.append((self.coord[0], self.coord[1]-1))
+                self.coord = [self.coord[0], self.coord[1]-1]
+
+            if self.canTravel(self.coord[0], self.coord[1]+1) and not hasMoved:
+                hasMoved = True
+                self.travelled.append((self.coord[0], self.coord[1]+1))
+                self.coord = [self.coord[0], self.coord[1]+1]
+
+        else:
+            self.movingCoord[0] += pyxel.sgn(self.coord[0]-self.movingCoord[0])*1/self.cooldown
+            self.movingCoord[1] += pyxel.sgn(self.coord[1]-self.movingCoord[1])*1/self.cooldown
+            
+            
+
+    def canTravel(self,X,Y):
+        return map[Y][X] in [1,3,4] and (X,Y) not in self.travelled
+
     def draw(self):
-        pass
+        pyxel.rect(5*TILE_SIZE+self.movingCoord[0]*TILE_SIZE+4, self.movingCoord[1]*TILE_SIZE+4, self.width, self.height, col=7)
 
 
 
@@ -174,14 +236,88 @@ class Button:
             pyxel.text(self.x + self.w//2 - len(self.name)*2, self.y + self.h//2-3, self.name, 9)
 
 
-class Towers(Button):
-    def place(self,X,Y):
-        self.x = X*TILE_SIZE
+class Case:
+    def __init__(self,X,Y):
+        self.x = MARGIN + X*TILE_SIZE
         self.y = Y*TILE_SIZE
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+
+        self.state = EmptyCase(self.x,self.y)
+
+    def update(self):
+        self.state.update()
+
+    def draw(self):
+        self.state.draw()
+
+
+            
+
+
+class EmptyCase:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+        self.selectTower = False
+        self.name = 'empty'
+
+    def update(self):
+        if self.pressed():
+            self.selectTower = True
+            
+    def draw(self):
+        pyxel.rect(self.x,self.y,self.w,self.h,1)
+    
+    def pressed(self):
+        return pointInside(pyxel.mouse_x, pyxel.mouse_y, self.x,self.y,self.w,self.h) and pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
+
+class PathCase:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+
+        self.place = 'mid'
+        self.name = 'path'
+            
+    def draw(self):
+        if self.place == 'start':
+            pyxel.rect(self.x,self.y,self.w,self.h,8)
+        elif self.place == 'end':
+            pyxel.rect(self.x,self.y,self.w,self.h,3)
+        else:
+            pyxel.rect(self.x,self.y,self.w,self.h,4)
+
+class TowerCase:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+
+        self.name = 'tower'
+
+    def update(self):
+        pass
+
+    def draw(self):
+        pyxel.rect(self.x,self.y,self.w,self.h,2)
 
 
 
-class MouseTrap(Towers):
+
+
+    
+
+
+
+
+
+class MouseTrap:
     pass
 
 
@@ -190,6 +326,8 @@ def pointInside(posX,posY,x,y,w,h):
     return (posX >= x and posX < x + w and
             posY >= y and posY < y + h)
 
+def onTick(x):
+    return pyxel.frame_count % x == 0
 
 
 
