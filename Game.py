@@ -92,34 +92,50 @@ class InGame:
     def __init__(self):
         self.switch = Switch()
 
+        self.world = World((0,0),(4,0),[(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(4,1)])
+
+
     def update(self):
-        pass
+        self.world.update()
     def draw(self):
-        pass
+        self.world.draw()
+
+map = []
 
 class World:
     def __init__(self, startPoint, endPoint, path):
+        global map
         self.length = 12
         self.height = 12
 
-        self.map = []
         for i in range(self.length):
             tab = []
             for j in range(self.height):
                 tab.append(0)
-            self.map.append(tab)
+            map.append(tab)
 
-        self.map[startPoint[1]][startPoint[0]] = 3 #Puts start point
-        self.map[endPoint[1]][endPoint[0]] = 4 #Puts end point
+        map[startPoint[1]][startPoint[0]] = 3 #Puts start point
+        map[endPoint[1]][endPoint[0]] = 4 #Puts end point
 
         for coord in path :
-            self.map[coord[1]][coord[0]] = 1
+            map[coord[1]][coord[0]] = 1
 
 
     def draw(self):
-        for Y in range(len(self.map)):
-            for X in range(len(self.map[Y])):
-                pyxel.rect(X*TILE_SIZE, Y*TILE_SIZE, TILE_SIZE, TILE_SIZE, col=self.map[Y][X])
+        pyxel.rect(0,0, 5*TILE_SIZE, CAM_H, col=7)
+        pyxel.rect(CAM_W-5*TILE_SIZE,0, 5*TILE_SIZE, CAM_H, col=7)
+
+        for Y in range(len(map)):
+            for X in range(len(map[Y])):
+                pyxel.rect(X*TILE_SIZE+5*TILE_SIZE, Y*TILE_SIZE, TILE_SIZE, TILE_SIZE, col=map[Y][X])
+
+    def update(self):
+        global map
+        for Y in range(len(map)):
+            for X in range(len(map[Y])):
+                if map[Y][X]==0 and pyxel.btnp(pyxel.KEY_SPACE) and pointInside(pyxel.mouse_x, pyxel.mouse_y, 5*TILE_SIZE+X*TILE_SIZE, Y*TILE_SIZE, TILE_SIZE, TILE_SIZE):
+                    map[Y][X]=2
+
 
 
 class Player:
