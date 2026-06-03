@@ -107,6 +107,19 @@ class InGame:
         self.lives = 50
         self.money = 0
 
+        self.selectedCase = None
+        self.buttons = []
+        self.initButtons()
+
+    def initButtons(self):
+        self.buttons.append(Button(10,30,50,50,'SlingShot',11))
+        self.buttons.append(Button(68,30,50,50,'Gumball',11))
+        self.buttons.append(Button(10,88,50,50,'MouseTrap',11))
+        self.buttons.append(Button(68,88,50,50,'Poison',11))
+
+        for button in self.buttons:
+            button.showName = False
+
 
     def update(self):
         self.world.update()
@@ -118,6 +131,14 @@ class InGame:
         self.bulletsUpdate()
 
         self.checkAddTowers()
+
+        self.buttonsUpdate()
+
+    def buttonsUpdate(self):
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT) and self.selectedCase != None:
+            for button in self.buttons:
+                if button.pressed():
+                    self.createTower(self.selectedCase,button.name)
 
     def enemiesUpdate(self):
         for enemy in self.enemies:
@@ -161,6 +182,11 @@ class InGame:
     def draw(self):
         self.world.draw()
 
+        for button in self.buttons:
+            button.draw()
+            if button.name in ['SlingShot', 'MouseTrap', 'Poison', 'GumBall']:
+                drawTower(button.x + 9, button.y + 9, button.name)
+
         pyxel.text(1, 1, f"Vies restantes : {self.lives}", 8)
         pyxel.text(CAM_W-3*TILE_SIZE,1, f"Argent : {self.money}", 9)
 
@@ -170,11 +196,23 @@ class InGame:
         for bullet in self.bullets:
             bullet.draw()
 
+        if self.selectedCase != None:
+            pyxel.rectb(self.selectedCase.x,self.selectedCase.y, TILE_SIZE, TILE_SIZE, 10)
+
+
     def checkAddTowers(self):
-        for line in self.world.map:
-            for case in line:
-                if case.state.name == 'EmptyCase' and pyxel.btnp(pyxel.KEY_SPACE) and pointInside(pyxel.mouse_x, pyxel.mouse_y, case.x, case.y, TILE_SIZE, TILE_SIZE):
-                    self.createTower(case)
+        x = (pyxel.mouse_x-MARGIN)//TILE_SIZE
+        y = pyxel.mouse_y//TILE_SIZE
+
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            if self.inMap(x,y) and not self.world.map[y][x].state.name == 'PathCase':
+                self.selectedCase = self.world.map[y][x]
+
+
+
+
+    def inMap(self,x,y):
+        return x >= 0 and x < self.world.width and y >= 0 and y < self.world.height 
 
     def createTower(self,case,tower='SlingShot'):
         if case.state.name == 'EmptyCase':
@@ -323,13 +361,16 @@ class Button:
         self.y = y
         self.w = w
         self.h = h
+        self.color = color
+
+        self.showName = True
 
     def pressed(self):
         return pointInside(pyxel.mouse_x, pyxel.mouse_y, self.x,self.y,self.w,self.h) and pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
 
     def draw(self):
-        pyxel.rect(self.x,self.y,self.w,self.h,1)
-        if self.name != '':
+        pyxel.rect(self.x,self.y,self.w,self.h,self.color)
+        if self.name != '' and self.showName:
             pyxel.text(self.x + self.w//2 - len(self.name)*2, self.y + self.h//2-3, self.name, 9)
 
 
@@ -379,7 +420,7 @@ class PathCase:
         self.h = TILE_SIZE
 
         self.place = 'mid'
-        self.name = 'Pathcase'
+        self.name = 'PathCase'
             
     def draw(self):
         if self.place == 'start':
@@ -487,6 +528,16 @@ class MouseTrap:
     def draw(self):
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
         pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+    
+
+
+def drawTower(x,y,name):
+    if name == 'SlingShot':
+        pyxel.blt(x,y,0,64,0,32,32,colkey=11)
+    if name == 'GumBall':
+        pyxel.blt(x,y,0,64,32,32,32,colkey=11)
+    if name == 'MouseTrap':
+        pyxel.blt(x,y,0,64,96,32,32,colkey=11)
     
 
 
