@@ -65,8 +65,8 @@ class Menu:
         self.switch = Switch()
         self.buttons = []
 
-        self.buttons.append(Button('play',30,30,100,50))
-        self.buttons.append(Button('quit',30,90,100,50))
+        self.buttons.append(Button(30,30,100,50,'play',))
+        self.buttons.append(Button(30,90,100,50,'quit'))
 
 
     def update(self):
@@ -157,17 +157,6 @@ class Enemy:
 
 
 
-
-class Towers(Button):
-    def place(self,X,Y):
-        self.x = X*TILE_SIZE
-        self.y = Y*TILE_SIZE
-
-
-
-class MouseTrap(Towers):
-    pass
-
 class Button:
     def __init__(self,x,y,w,h,name='',color=1):
         self.name = name
@@ -181,8 +170,19 @@ class Button:
 
     def draw(self):
         pyxel.rect(self.x,self.y,self.w,self.h,1)
-        if name != '':
+        if self.name != '':
             pyxel.text(self.x + self.w//2 - len(self.name)*2, self.y + self.h//2-3, self.name, 9)
+
+
+class Towers(Button):
+    def place(self,X,Y):
+        self.x = X*TILE_SIZE
+        self.y = Y*TILE_SIZE
+
+
+
+class MouseTrap(Towers):
+    pass
 
 
 
