@@ -97,12 +97,13 @@ class InGame:
         self.world = World([(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(4,1),(4,0)])
         
         self.enemies = []
-        self.enemies.append(Enemy(10,0.5*FPS,10,self.world.path))
+        self.enemies.append(Car(self.world.path))
 
         self.towers = []
 
 
         self.lives = 50
+        self.money = 0
 
 
     def update(self):
@@ -116,14 +117,25 @@ class InGame:
         for enemy in self.enemies:
             enemy.update()
 
-            if self.world.map[enemy.coord[1]][enemy.coord[0]].state.place == 'end':
+
+
+            if enemy.health <= 0:
+                self.enemies.remove(enemy)
+                enemy.onDeath()
+                self.money += enemy.maxHealth
+
+            for enemy in enemy.spawned:
+                self.enemies.append(enemy)
+
+            if self.world.map[enemy.coord[1]][enemy.coord[0]].state.place == 'end' and enemy.health > 0:
                 self.lives -= enemy.damage
                 self.enemies.remove(enemy)
 
     def draw(self):
         self.world.draw()
 
-        pyxel.text(0, 1, f"Lives remaining : {self.lives}", 8)
+        pyxel.text(1, 1, f"Vies restantes : {self.lives}", 8)
+        pyxel.text(21*TILE_SIZE,1, f"Argent : {self.money}", 9)
 
         for enemy in self.enemies:
             enemy.draw()
@@ -174,6 +186,7 @@ class World:
     
 class Enemy:
     def __init__(self, health, cooldown, damage, path):
+        self.maxHealth = health
         self.health = health
         self.cooldown = cooldown
         self.damage = damage
@@ -187,6 +200,8 @@ class Enemy:
         self.movingCoord = [path[0][0],path[0][1]]
         self.travelled = [(self.coord[0], self.coord[1])]
 
+        self.spawned = []
+
     def update(self):
         if onTick(self.cooldown):
             self.movingCoord = [self.coord[0], self.coord[1]]
@@ -197,9 +212,36 @@ class Enemy:
             self.movingCoord[0] += pyxel.sgn(self.coord[0]-self.movingCoord[0])*1/self.cooldown
             self.movingCoord[1] += pyxel.sgn(self.coord[1]-self.movingCoord[1])*1/self.cooldown
 
+
     def draw(self):
         pyxel.rect(5*TILE_SIZE+self.movingCoord[0]*TILE_SIZE+4, self.movingCoord[1]*TILE_SIZE+4, self.width, self.height, col=7)
 
+    def onDeath(self):
+        pass
+
+class Spider(Enemy):
+    def __init__(self, path):
+        super().__init__(health = 10, cooldown=0.4*FPS, damage=3, path=path)
+
+class Soldier(Enemy):
+    def __init__(self, path):
+        super().__init__(health = 10, cooldown=0.5*FPS, damage=5, path=path)
+
+class General(Enemy):
+    def __init__(self, path):
+        super().__init__(health = 30, cooldown=1*FPS, damage=20, path=path)
+
+    def onDeath(self):
+        for i in range(3):
+            self.spawned.append(Soldier())
+
+class Dino(Enemy):
+    def __init__(self, path):
+        super().__init__(health = 50, cooldown=2*FPS, damage=40, path=path)
+
+class Car(Enemy):
+    def __init__(self, path):
+        super().__init__(health=5, cooldown=0.2*FPS, damage=10, path=path)
 
 
 class Button:
