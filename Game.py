@@ -92,7 +92,6 @@ class InGame:
     def __init__(self):
         self.switch = Switch()
 
-
     def update(self):
         pass
     def draw(self):
@@ -140,8 +139,21 @@ class Enemy:
     def draw(self):
         pass
 
+
+
+
+class Towers(Button):
+    def place(self,X,Y):
+        self.x = X*TILE_SIZE
+        self.y = Y*TILE_SIZE
+
+
+
+class MouseTrap(Towers):
+    pass
+
 class Button:
-    def __init__(self,name,x,y,w,h):
+    def __init__(self,x,y,w,h,name='',color=1):
         self.name = name
         self.x = x
         self.y = y
@@ -153,7 +165,8 @@ class Button:
 
     def draw(self):
         pyxel.rect(self.x,self.y,self.w,self.h,1)
-        pyxel.text(self.x + self.w//2 - len(self.name)*2, self.y + self.h//2-3, self.name, 9)
+        if name != '':
+            pyxel.text(self.x + self.w//2 - len(self.name)*2, self.y + self.h//2-3, self.name, 9)
 
 
 
