@@ -1,7 +1,7 @@
 import pyxel
 
-CAM_W = 800
-CAM_H = 600
+CAM_W = 400
+CAM_H = 300
 
 
 class App:
@@ -11,6 +11,8 @@ class App:
 
         self.game = Game()
 
+
+        pyxel.mouse(True)
         pyxel.run(self.update,self.draw)
 
     def update(self):
@@ -23,24 +25,23 @@ class App:
 class Game:
     def __init__(self):
         self.state = Menu()
-        self.switch = Switch()
     def update(self):
         self.state.update()
 
         self.checkSwitch()
 
     def draw(self):
-        pyxel.cls(1)
+        pyxel.cls(0)
         self.state.draw()
 
     def checkSwitch(self):
-        if self.switch.ready:
-            destination = self.switch.to
+        if self.state.switch.ready:
+            destination = self.state.switch.to
             if destination == 'InGame':
                 self.state = InGame()
 
             else:
-                self.switch.__init__()
+                self.state.switch.__init__()
 
 
 
@@ -59,15 +60,37 @@ class Switch:
 
 class Menu:
     def __init__(self):
-        pass
+        self.switch = Switch()
+        self.buttons = []
+
+        self.buttons.append(Button('play',30,30,100,50))
+        self.buttons.append(Button('quit',30,90,100,50))
+
+
     def update(self):
-        pass
+        self.buttonsUpdate()
+
     def draw(self):
-        pass
+        for button in self.buttons:
+            button.draw()
+    def buttonsUpdate(self):
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            for button in self.buttons:
+                if button.pressed():
+                    self.buttonAction(button.name)
+
+    def buttonAction(self,name):
+        if name == 'play':
+            self.switch.change('InGame')
+        if name == 'quit':
+            pyxel.quit()
+
 
 class InGame:
     def __init__(self):
-        pass
+        self.switch = Switch()
+
+
     def update(self):
         pass
     def draw(self):
@@ -97,6 +120,28 @@ class Enemy:
         pass
     def draw(self):
         pass
+
+class Button:
+    def __init__(self,name,x,y,w,h):
+        self.name = name
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+
+    def pressed(self):
+        return pointInside(pyxel.mouse_x, pyxel.mouse_y, self.x,self.y,self.w,self.h) and pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
+
+    def draw(self):
+        pyxel.rect(self.x,self.y,self.w,self.h,1)
+        pyxel.text(self.x + self.w//2 - len(self.name)*2, self.y + self.h//2-3, self.name, 9)
+
+
+
+def pointInside(posX,posY,x,y,w,h):
+    return (posX >= x and posX < x + w and
+            posY >= y and posY < y + h)
+
 
 
 
