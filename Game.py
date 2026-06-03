@@ -1,4 +1,4 @@
-import pyxel
+import pyxel, random
 
 CAM_W = 608
 CAM_H = 352
@@ -97,7 +97,6 @@ class InGame:
         self.world = World([(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(5,2),(6,2),(7,2),(8,2),(9,2),(9,3),(9,4),(9,5),(9,6),(9,7),(9,8),(9,9),(8,9),(7,9),(7,8),(7,7),(8,7),(9,7),(9,8),(9,9),(8,9),(7,9),(7,8),(7,7),(7,6),(7,5),(7,4),(6,4),(5,4),(4,4),(4,5),(4,6),(4,7),(4,8),(4,9)])
         
         self.enemies = []
-        self.enemies.append(Spider(self.world.path))
 
         self.towers = []
 
@@ -110,6 +109,8 @@ class InGame:
         self.selectedCase = None
         self.buttons = []
         self.initButtons()
+
+        self.timeBetweenSpawns = 5*FPS
 
     def initButtons(self):
         self.buttons.append(Button(10,30,50,50,'SlingShot',11))
@@ -136,6 +137,10 @@ class InGame:
         self.checkAddTowers()
 
         self.buttonsUpdate()
+
+        if onTick(self.timeBetweenSpawns):
+            self.enemies.append(random.choice([Spider, Soldier, General, Car, Dino])(self.path))
+            self.timeBetweenSpawns *= 0.95
 
     def buttonsUpdate(self):
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT) and self.selectedCase != None:
