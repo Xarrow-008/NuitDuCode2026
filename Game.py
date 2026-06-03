@@ -9,6 +9,8 @@ MARGIN = 4*TILE_SIZE
 
 FPS = 60
 
+cost = {'SlingShot':30, 'MouseTrap':20, 'Poison':10, 'GumBall':10}
+
 class App:
     def __init__(self):
         pyxel.init(CAM_W,CAM_H,fps=FPS)
@@ -36,7 +38,7 @@ class Game:
         self.checkSwitch()
 
     def draw(self):
-        pyxel.cls(0)
+        pyxel.cls(4)
         self.state.draw()
 
     def checkSwitch(self):
@@ -104,7 +106,7 @@ class InGame:
 
 
         self.lives = 50
-        self.money = 0
+        self.money = 50
 
         self.selectedCase = None
         self.buttons = []
@@ -114,12 +116,10 @@ class InGame:
 
     def initButtons(self):
         self.buttons.append(Button(10,30,50,50,'SlingShot',11))
-        self.buttons.append(Button(68,30,50,50,'Gumball',11))
+        self.buttons.append(Button(68,30,50,50,'GumBall',11))
         self.buttons.append(Button(10,88,50,50,'MouseTrap',11))
         self.buttons.append(Button(68,88,50,50,'Poison',11))
 
-
-        self.buttons.append(Button(10,30,50,50,'upgradeDamage',11))
 
         for button in self.buttons:
             button.showName = False
@@ -194,6 +194,7 @@ class InGame:
             button.draw()
             if button.name in ['SlingShot', 'MouseTrap', 'Poison', 'GumBall']:
                 drawTower(button.x + 9, button.y + 9, button.name)
+                pyxel.text(button.x + 20, button.y + 51, str(cost[button.name]),0)
 
         pyxel.text(1, 1, f"Vies restantes : {self.lives}", 8)
         pyxel.text(CAM_W-3*TILE_SIZE,1, f"Argent : {self.money}", 9)
@@ -224,8 +225,11 @@ class InGame:
 
     def createTower(self,case,tower='SlingShot'):
         if case.state.name == 'EmptyCase':
-            case.state = TowerCase(case.x,case.y,tower)
-            self.towers.append(case)
+            if self.money >= cost[tower]:
+                case.state = TowerCase(case.x,case.y,tower)
+                self.towers.append(case)
+                self.money += -cost[tower]
+            
 
     def towersUpdate(self):
         for tower in self.towers:
@@ -417,7 +421,7 @@ class EmptyCase:
             self.selectTower = True
             
     def draw(self):
-        pyxel.rect(self.x,self.y,self.w,self.h,1)
+        pyxel.rect(self.x,self.y,self.w,self.h,4)
     
     def pressed(self):
         return pointInside(pyxel.mouse_x, pyxel.mouse_y, self.x,self.y,self.w,self.h) and pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT)
@@ -438,7 +442,7 @@ class PathCase:
         elif self.place == 'end':
             pyxel.rect(self.x,self.y,self.w,self.h,3)
         else:
-            pyxel.rect(self.x,self.y,self.w,self.h,4)
+            pyxel.rect(self.x,self.y,self.w,self.h,14)
 
 class TowerCase:
     def __init__(self,x,y,type):
@@ -463,6 +467,10 @@ class TowerCase:
             self.weapon = SlingShot(self.x,self.y)
         elif type == "MouseTrap":
             self.weapon = MouseTrap(self.x,self.y)
+        elif type == "GumBall":
+            self.weapon = GumBall(self.x,self.y)
+        elif type == "Poison":
+            self.weapon = Poison(self.x,self.y)
         else:
             self.weapon = SlingShot(self.x,self.y)
 
@@ -511,8 +519,8 @@ class SlingShot:
 
 
     def draw(self):
-        pyxel.rect(self.x,self.y,self.w,self.h,2) 
-        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+        drawTower(self.x,self.y,'SlingShot')
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*20,self.y+self.h//2 + self.orient[1]*20, 7)
 
     def rotate(self):
         if self.orient == [-1,0]:
@@ -550,8 +558,8 @@ class MouseTrap:
 
 
     def draw(self):
-        pyxel.rect(self.x,self.y,self.w,self.h,2) 
-        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+        drawTower(self.x,self.y,'MouseTrap')
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*20,self.y+self.h//2 + self.orient[1]*20, 7)
 
         
     def rotate(self):
@@ -590,8 +598,8 @@ class GumBall:
 
 
     def draw(self):
-        pyxel.rect(self.x,self.y,self.w,self.h,2) 
-        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+        drawTower(self.x,self.y,'GumBall')
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*20,self.y+self.h//2 + self.orient[1]*20, 7)
 
 
     def rotate(self):
@@ -631,8 +639,8 @@ class Poison:
 
 
     def draw(self):
-        pyxel.rect(self.x,self.y,self.w,self.h,2) 
-        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+        drawTower(self.x,self.y,'Poison')
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*20,self.y+self.h//2 + self.orient[1]*20, 7)
        
 
     def rotate(self):
@@ -656,6 +664,8 @@ def drawTower(x,y,name):
         pyxel.blt(x,y,0,64,32,32,32,colkey=11)
     if name == 'MouseTrap':
         pyxel.blt(x,y,0,64,96,32,32,colkey=11)
+    if name == 'Poison':
+        pyxel.blt(x,y,0,64,64,32,32,colkey=11)
     
 
 
