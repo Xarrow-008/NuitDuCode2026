@@ -94,10 +94,10 @@ class InGame:
     def __init__(self):
         self.switch = Switch()
 
-        self.world = World([(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(4,1),(4,0)])
+        self.world = World([(0,0),(0,1),(0,2),(1,2),(2,2),(3,2),(4,2),(5,2),(5,1),(5,0)])
         
         self.enemies = []
-        self.enemies.append(General(self.world.path))
+        self.enemies.append(Spider(self.world.path))
 
         self.towers = []
 
@@ -116,6 +116,9 @@ class InGame:
         self.buttons.append(Button(68,30,50,50,'Gumball',11))
         self.buttons.append(Button(10,88,50,50,'MouseTrap',11))
         self.buttons.append(Button(68,88,50,50,'Poison',11))
+
+
+        self.buttons.append(Button(10,30,50,50,'upgradeDamage',11))
 
         for button in self.buttons:
             button.showName = False
@@ -164,7 +167,7 @@ class InGame:
 
             for enemy in self.enemies:
                 
-                print(enemy.x<=bullet.x-bullet.radius)
+                print(enemy.x, enemy.y, bullet.x-bullet.radius, bullet.y-bullet.radius)
 
                 if collision(enemy.x, enemy.y, (enemy.width, enemy.height), bullet.x-bullet.radius, bullet.y-bullet.radius, (2*bullet.radius, 2*bullet.radius)) and bullet.range > 0:
                     print("a")
@@ -227,6 +230,10 @@ class InGame:
                 self.bullets.append(weapon.bullet)
                 weapon.bullet = None
 
+        if pyxel.btnp(pyxel.KEY_R) and self.selectedCase.state.name == 'TowerCase':
+            self.selectedCase.state.weapon.rotate()
+
+
 
 
 class World:
@@ -272,8 +279,8 @@ class Enemy:
 
         self.damage = damage
 
-        self.width = 8
-        self.height = 8
+        self.width = TILE_SIZE
+        self.height = TILE_SIZE
         
         self.indice = 0
         self.path = path
@@ -326,7 +333,7 @@ class Soldier(Enemy):
         super().__init__(health = 10, cooldown=0.5*FPS, damage=5, path=path)
         
     def draw(self):
-        pyxel.blt(self.x,self.y,0,0,32,16,16,colkey=11)
+        pyxel.blt(self.x,self.y,0,0,64,16,16,colkey=11)
 
 class General(Enemy):
     def __init__(self, path):
@@ -344,14 +351,14 @@ class Dino(Enemy):
         super().__init__(health = 50, cooldown=2*FPS, damage=40, path=path)
         
     def draw(self):
-        pyxel.blt(self.x,self.y,0,0,48,16,16,colkey=11)
+        pyxel.blt(self.x,self.y,0,0,104,32,32,colkey=11)
 
 class Car(Enemy):
     def __init__(self, path):
         super().__init__(health=5, cooldown=0.2*FPS, damage=10, path=path)
         
     def draw(self):
-        pyxel.blt(self.x,self.y,0,0,64,16,16,colkey=11)
+        pyxel.blt(self.x,self.y,0,0,136,32,32,colkey=11)
 
 
 class Button:
@@ -391,8 +398,6 @@ class Case:
 
 
             
-
-
 class EmptyCase:
     def __init__(self,x,y):
         self.x = x
@@ -440,6 +445,8 @@ class TowerCase:
         self.name = 'TowerCase'
         self.initType(type)
 
+        self.lvlDamage = 1
+
     def update(self):
         self.weapon.update()
 
@@ -476,7 +483,6 @@ class Bullet:
     def draw(self):
         pyxel.circ(self.x, self.y, self.radius, 7)
 
-
 class SlingShot:
     def __init__(self,x,y):
         self.x = x
@@ -502,6 +508,19 @@ class SlingShot:
     def draw(self):
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
         pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
+
+    def rotate(self):
+        if self.orient == [-1,0]:
+            self.orient = [0,1]
+            
+        elif self.orient == [0,1]:
+            self.orient = [1,0]
+
+        elif self.orient == [1,0]:
+            self.orient = [0,-1]
+
+        elif self.orient == [0,-1]:
+            self.orient = [-1,0]
 
 class MouseTrap:
     def __init__(self,x,y):
@@ -529,6 +548,18 @@ class MouseTrap:
         pyxel.rect(self.x,self.y,self.w,self.h,2) 
         pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
     
+    def rotate(self):
+        if self.orient == [-1,0]:
+            self.orient = [0,1]
+            
+        if self.orient == [0,1]:
+            self.orient = [1,0]
+
+        if self.orient == [1,0]:
+            self.orient = [0,-1]
+
+        if self.orient == [0,-1]:
+            self.orient = [-1,0]
 
 
 def drawTower(x,y,name):
