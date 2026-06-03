@@ -101,6 +101,8 @@ class InGame:
 
         self.towers = []
 
+        self.bullets = []
+
 
         self.lives = 50
         self.money = 0
@@ -112,6 +114,10 @@ class InGame:
         self.enemiesUpdate()
 
         self.towersUpdate()
+
+        self.bulletsUpdate()
+
+        self.checkAddTowers()
 
     def enemiesUpdate(self):
         for enemy in self.enemies:
@@ -131,6 +137,10 @@ class InGame:
                 self.lives -= enemy.damage
                 self.enemies.remove(enemy)
 
+    def bulletsUpdate(self):
+        for bullet in self.bullets:
+            print(bullet)
+
     def draw(self):
         self.world.draw()
 
@@ -140,11 +150,24 @@ class InGame:
         for enemy in self.enemies:
             enemy.draw()
 
-    def createTower(self,X,Y):
-        pass
+    def checkAddTowers(self):
+        for line in self.world.map:
+            for case in line:
+                if case.state.name == 'EmptyCase' and pyxel.btnp(pyxel.KEY_SPACE) and pointInside(pyxel.mouse_x, pyxel.mouse_y, case.x, case.y, TILE_SIZE, TILE_SIZE):
+                    self.createTower(case)
+
+    def createTower(self,case,tower='SlingShot'):
+        if case.state.name == 'EmptyCase':
+            case.state = TowerCase(case.x,case.y,tower)
+            self.towers.append(case)
 
     def towersUpdate(self):
-        pass
+        for tower in self.towers:
+            tower.update()
+            weapon = tower.state.weapon
+            if weapon.bullet != None:
+                self.bullets.append(weapon.bullet)
+                weapon.bullet = None
 
 
 
@@ -177,10 +200,7 @@ class World:
                 
 
     def update(self):
-        for line in self.map:
-            for case in line:
-                if case.state.name == 'empty' and pyxel.btnp(pyxel.KEY_SPACE) and pointInside(pyxel.mouse_x, pyxel.mouse_y, case.x, case.y, TILE_SIZE, TILE_SIZE):
-                    case.state = TowerCase(case.x,case.y)
+        pass
 
 
     
@@ -287,7 +307,7 @@ class EmptyCase:
         self.w = TILE_SIZE
         self.h = TILE_SIZE
         self.selectTower = False
-        self.name = 'empty'
+        self.name = 'EmptyCase'
 
     def update(self):
         if self.pressed():
@@ -307,7 +327,7 @@ class PathCase:
         self.h = TILE_SIZE
 
         self.place = 'mid'
-        self.name = 'path'
+        self.name = 'Pathcase'
             
     def draw(self):
         if self.place == 'start':
@@ -318,27 +338,53 @@ class PathCase:
             pyxel.rect(self.x,self.y,self.w,self.h,4)
 
 class TowerCase:
+    def __init__(self,x,y,type):
+        self.x = x
+        self.y = y
+        self.w = TILE_SIZE
+        self.h = TILE_SIZE
+
+        self.name = 'TowerCase'
+        self.initType(type)
+
+    def update(self):
+        self.weapon.update()
+
+    def draw(self):
+        self.weapon.draw()
+
+    def initType(self,type): #list al the types
+        if type == 'SlingShot':
+            self.weapon = SlingShot(self.x,self.y)
+        else:
+            self.weapon = SlingShot(self.x,self.y)
+
+
+class SlingShot:
     def __init__(self,x,y):
         self.x = x
         self.y = y
         self.w = TILE_SIZE
         self.h = TILE_SIZE
 
-        self.name = 'tower'
+        self.orient = [-1,0]
+
+        self.bullet = None
 
     def update(self):
-        pass
+        if self.seeEnemy() and onTick(60):
+            self.shoot()
+
+    def shoot(self):
+        self.bullet = [self.x+self.orient[0]*TILE_SIZE, self.y + self.orient[1]*TILE_SIZE]
+
+    def seeEnemy(self):
+        return True
+
 
     def draw(self):
-        pyxel.rect(self.x,self.y,self.w,self.h,2)
-
-class SlingShot:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-
-    def update(self):
-        pass
+        pyxel.rect(self.x,self.y,self.w,self.h,2) 
+        pyxel.line(self.x+self.w//2,self.y+self.h//2,self.x+self.w//2 + self.orient[0]*5,self.y+self.h//2 + self.orient[1]*5, 7)
 
 
 
